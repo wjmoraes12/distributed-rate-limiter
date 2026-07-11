@@ -11,7 +11,6 @@ class RateLimiterService {
         const now = Date.now();
 
         let bucket = memoryStore.get(key);
-        console.log(bucket);
         if (!bucket) {
             bucket = {
                 tokens: this.capacity,

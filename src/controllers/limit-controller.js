@@ -12,7 +12,6 @@ class LimitController {
         const key = req.ip.replace("::ffff:", "");
 
         const result = await rateLimiterService.consume(key);
-
         if (!result.allowed) {
             return res.status(429).json({
                 message: "Muitas requisições. Tente novamente mais tarde.",
