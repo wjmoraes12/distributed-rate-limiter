@@ -8,7 +8,10 @@ class MemoryStore {
     }
 
     getAll() {
-        return [...this.store.values()];
+        return [...this.store.entries()].map(([key, bucket]) => ({
+            key,
+            ...bucket
+        }));
     }
 
     set(key, value) {
@@ -21,11 +24,23 @@ class MemoryStore {
     }
 
     delete(key) {
-        return this.store.delete(key);
+        const deleted = this.store.delete(key);
+
+        return{
+            deleted,
+            key
+        }
     }
 
-    clear() {
-        this.store.clear();
+    deleteAll() {
+        const totalBuckets = this.store.size;
+
+        this.store.clear()
+
+        return {
+            deletedBuckets: totalBuckets,
+            isEmpty: this.store.size === 0
+        }
     }
 }
 export default new MemoryStore();

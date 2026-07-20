@@ -7,5 +7,4 @@ app.use(express.json());
 
 app.use("/", limitRoutes);
 
-
 export default app;

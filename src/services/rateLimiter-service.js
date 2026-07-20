@@ -10,15 +10,26 @@ class RateLimiterService {
     }
 
     consume(key){
-
         return this.algorithm.consume(key);
 
     }
 
     getAll(){
-
         return this.algorithm.getAll();
 
+    }
+
+    getBucketByKey(key){
+        return this.algorithm.getBucketByKey(key);
+
+    }
+
+    deleteAll(){
+        return this.algorithm.deleteAll();
+    }
+
+    deleteBucketByKey(key){
+        return this.algorithm.deleteBucketByKey(key);
     }
 
 }

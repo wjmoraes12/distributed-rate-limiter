@@ -31,6 +31,23 @@ class TokenBucketAlgorithm extends Algorithm {
         return this.buildAllowedResponse(bucket);
     }
 
+    getAll() {
+        return this.store.getAll();
+    }
+
+    getBucketByKey(key){
+        return this.store.get(key);
+    }
+
+    deleteAll(){
+        return this.store.deleteAll()
+    }
+
+    deleteBucketByKey(key){
+        return this.store.delete(key)
+    }
+
+    //Métodos Auxiliares
     getOrCreateBucket(key, now) {
         const bucket = this.store.get(key);
 
@@ -92,10 +109,5 @@ class TokenBucketAlgorithm extends Algorithm {
             retryAfter: Math.ceil(retryAfter / 1000)
         };
     }
-
-    getAll(){
-        return this.store.getAll();
-    }
 }
-
 export default TokenBucketAlgorithm;
