@@ -7,10 +7,8 @@ router.get("/", (req, res) => LimitController.health(req, res));
 
 router.post("/check", (req, res) => LimitController.consume(req, res));
 
-router.get("/bucket", (req, res) => LimitController.getBucket(req, res));
+router.post("/getAll", (req, res) => LimitController.getAll(req, res));
 
-router.delete("/reset", (req, res) => LimitController.reset(req, res));
 
-router.delete("/reset-all", (req, res) => LimitController.resetAll(req, res));
 
 export default router;

@@ -47,8 +47,7 @@ class TokenBucketAlgorithm extends Algorithm {
     refillBucket(bucket, now) {
         const timePassed = now - bucket.updatedAt;
 
-        const tokensToAdd =
-            Math.floor(timePassed / this.refillTimeMs) * this.refillAmount;
+        const tokensToAdd = Math.floor(timePassed / this.refillTimeMs) * this.refillAmount;
 
         if (tokensToAdd > 0) {
             bucket.tokens = Math.min(
@@ -85,14 +84,17 @@ class TokenBucketAlgorithm extends Algorithm {
     }
 
     buildDeniedResponse(bucket, timePassed) {
-        const retryAfter =
-            this.refillTimeMs - (timePassed % this.refillTimeMs);
+        const retryAfter = this.refillTimeMs - (timePassed % this.refillTimeMs);
 
         return {
             allowed: false,
             tokens: bucket.tokens,
             retryAfter: Math.ceil(retryAfter / 1000)
         };
+    }
+
+    getAll(){
+        return this.store.getAll();
     }
 }
 

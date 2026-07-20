@@ -7,6 +7,10 @@ class MemoryStore {
         return this.store.get(key);
     }
 
+    getAll() {
+        return [...this.store.values()];
+    }
+
     set(key, value) {
         this.store.set(key, value);
         return value;
