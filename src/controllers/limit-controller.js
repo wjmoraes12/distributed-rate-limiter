@@ -1,4 +1,5 @@
 import rateLimiterService from "../services/rateLimiter-service.js";
+import responseBuilder from "../utils/response-builder.js";
 
 class LimitController {
 
@@ -19,17 +20,29 @@ class LimitController {
             const bucket = rateLimiterService.getBucketByKey(id)
 
             if(!bucket){
-                return res.status(404).json({
-                    message: "Bucket not found"
-                });
+                return responseBuilder.notFound(res)
             }
 
-            return res.json({
-                message: "Bucket found",
-                bucket: bucket
-            });
+            return responseBuilder.found(res,{bucket})
         } catch (error) {
-            return this.messageInternalError(res)
+            return responseBuilder.messageInternalError(res)
+        }
+    }
+
+    resetBucket(req, res) {
+        const { id } = req.params;
+    
+        try {
+            const bucket = rateLimiterService.resetBucket(id);
+
+            if (!bucket) {
+                return responseBuilder.notFound(res)
+            }
+    
+            return res.json(bucket);
+    
+        } catch (error) {
+            return responseBuilder.messageInternalError(res)
         }
     }
 
@@ -37,21 +50,15 @@ class LimitController {
         try{
             const key = this.getClientKey(req)
             const result = await rateLimiterService.consume(key);
-
+            console.log(result)
             if (!result.allowed) {
-                return res.status(429).json({
-                    message: "Muitas requisições. Tente novamente mais tarde.",
-                    retryAfter: result.retryAfter
-                });
+                return responseBuilder.tooManyRequests(res,{retryAfter : result.retryAfter})
             }
 
-            return res.json({
-                message: "Requisição permitida",
-                tokens: result.tokens
-            });
+            return responseBuilder.consumeSuccess(res, {message:"Request allowed",tokens:result.tokens})
 
         }catch(error){
-            return this.messageInternalError(res)
+            return responseBuilder.messageInternalError(res)
         }
     }
 
@@ -60,16 +67,14 @@ class LimitController {
             const result = await rateLimiterService.deleteAll();
 
             if(!result.isEmpty){
-                return this.messageIsNotDeleted(res)
+                return responseBuilder.messageIsNotDeleted(res)
             }
 
-            return res.json({
-                message:"Todos os Buckets foram deletados!",
-                status: true
-            })
+            return responseBuilder.deleted(res,`All of the buckets were deleted successfully`);
 
         } catch (error) {
-            return this.messageInternalError(res)
+            console.log(error)
+            return responseBuilder.messageInternalError(res)
         }
     }
 
@@ -79,34 +84,17 @@ class LimitController {
             const result = await rateLimiterService.deleteBucketByKey(id);
 
             if(!result.deleted){
-                return this.messageIsNotDeleted(res)
+                return responseBuilder.messageIsNotDeleted(res)
             }
 
-            return res.json({
-                message:`Buckets ${id} foi deletado!`,
-                status: true
-            })
+            return responseBuilder.deleted(res,`Bucket ${id} deleted successfully`);
             
         } catch (error) {
-            return this.messageInternalError(res)
+            return responseBuilder.messageInternalError(res)
         }
     }
 
     //Métodos Auxiliares
-    messageIsNotDeleted(res){
-        return res.json({
-            message: "Não foi possível deletar!",
-            status: false
-        })
-    }
-
-    messageInternalError(res){
-        return res.status(500).json({
-            message:"Erro interno ao Deletar os Buckets",
-            status: false
-        })
-    }
-
     getClientKey(req){
         return req.ip.replace(`::ffff:`,``)
     }

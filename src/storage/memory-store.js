@@ -32,6 +32,23 @@ class MemoryStore {
         }
     }
 
+    updatedBucket(key, data) {
+
+        const bucket = this.store.get(key);
+        if (!bucket) {
+            return null;
+        }
+    
+        const updatedBucket = {
+            ...bucket,
+            ...data
+        };
+    
+        this.store.set(key, updatedBucket);
+    
+        return updatedBucket;
+    }
+
     deleteAll() {
         const totalBuckets = this.store.size;
 

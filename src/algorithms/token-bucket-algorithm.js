@@ -39,6 +39,17 @@ class TokenBucketAlgorithm extends Algorithm {
         return this.store.get(key);
     }
 
+    resetBucket(key){
+        const now = Date.now()
+
+        const data = {
+            tokens: this.capacity,
+            updatedAt: now
+        };
+
+        return this.store.updatedBucket(key, data);
+    }
+
     deleteAll(){
         return this.store.deleteAll()
     }

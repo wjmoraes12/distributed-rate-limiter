@@ -24,6 +24,10 @@ class RateLimiterService {
 
     }
 
+    resetBucket(key){
+        return this.algorithm.resetBucket(key);
+    }
+
     deleteAll(){
         return this.algorithm.deleteAll();
     }

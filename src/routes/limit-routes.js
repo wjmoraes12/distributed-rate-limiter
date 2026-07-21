@@ -12,4 +12,6 @@ router.post("/check", (req, res) => LimitController.consume(req, res));
 router.delete("/buckets", (req, res) => LimitController.deleteAllBuckets(req, res));
 router.delete("/buckets/:id", (req, res) => LimitController.deleteBucketById(req, res));
 
+router.patch("/buckets/:id/reset", (req, res) => LimitController.resetBucket(req, res));
+
 export default router;

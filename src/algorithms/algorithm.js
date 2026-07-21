@@ -12,6 +12,10 @@ class Algorithm {
         throw new Error("Method getAll() must be implemented");
     }
 
+    resetBucket(){
+        throw new Error("Method resetBucket() must be implemented");
+    }
+
     deleteAll(key) {
         throw new Error("Method deleteAll() must be implemented");
     }
