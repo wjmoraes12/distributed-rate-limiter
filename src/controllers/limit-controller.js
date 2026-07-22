@@ -1,5 +1,6 @@
 import rateLimiterService from "../services/rateLimiter-service.js";
 import responseBuilder from "../utils/response-builder.js";
+import BucketNotFoundException from "../exceptions/bucket-not-found-exception.js";
 
 class LimitController {
 
@@ -16,82 +17,40 @@ class LimitController {
 
     getBucketByKey(req, res) {   
         const {id} = req.params;
-        try {
-            const bucket = rateLimiterService.getBucketByKey(id)
 
-            if(!bucket){
-                return responseBuilder.notFound(res)
-            }
+        const bucket = rateLimiterService.getBucketByKey(id)
 
-            return responseBuilder.found(res,{bucket})
-        } catch (error) {
-            return responseBuilder.messageInternalError(res)
-        }
+        return responseBuilder.found(res,{bucket})
     }
 
     resetBucket(req, res) {
         const { id } = req.params;
     
-        try {
-            const bucket = rateLimiterService.resetBucket(id);
-
-            if (!bucket) {
-                return responseBuilder.notFound(res)
-            }
+        const bucket = rateLimiterService.resetBucket(id);
     
-            return res.json(bucket);
-    
-        } catch (error) {
-            return responseBuilder.messageInternalError(res)
-        }
+        return res.json(bucket);
     }
 
     async consume(req, res) {
-        try{
-            const key = this.getClientKey(req)
-            const result = await rateLimiterService.consume(key);
-            console.log(result)
-            if (!result.allowed) {
-                return responseBuilder.tooManyRequests(res,{retryAfter : result.retryAfter})
-            }
+        const key = this.getClientKey(req)
 
-            return responseBuilder.consumeSuccess(res, {message:"Request allowed",tokens:result.tokens})
+        const result = await rateLimiterService.consume(key);
 
-        }catch(error){
-            return responseBuilder.messageInternalError(res)
-        }
+        return responseBuilder.consumeSuccess(res, {message:"Request allowed",tokens:result.tokens})
     }
 
     async deleteAllBuckets(req, res){
-        try {
-            const result = await rateLimiterService.deleteAll();
+        const result = await rateLimiterService.deleteAll();
 
-            if(!result.isEmpty){
-                return responseBuilder.messageIsNotDeleted(res)
-            }
-
-            return responseBuilder.deleted(res,`All of the buckets were deleted successfully`);
-
-        } catch (error) {
-            console.log(error)
-            return responseBuilder.messageInternalError(res)
-        }
+        return responseBuilder.deleted(res,`All of the buckets were deleted successfully`);
     }
 
     async deleteBucketById(req, res){
         const {id} = req.params;
-        try {
-            const result = await rateLimiterService.deleteBucketByKey(id);
+        
+        const result = await rateLimiterService.deleteBucketByKey(id);
 
-            if(!result.deleted){
-                return responseBuilder.messageIsNotDeleted(res)
-            }
-
-            return responseBuilder.deleted(res,`Bucket ${id} deleted successfully`);
-            
-        } catch (error) {
-            return responseBuilder.messageInternalError(res)
-        }
+        return responseBuilder.deleted(res,`Bucket ${id} deleted successfully`);
     }
 
     //Métodos Auxiliares

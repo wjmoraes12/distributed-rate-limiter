@@ -13,9 +13,9 @@ class ResponseBuilder{
         });
     }
 
-    messageIsNotDeleted(res){
+    messageEmptyStorage(res){
         return res.json({
-            message: "Não foi possível deletar!",
+            message: "Empty Storage",
             status: false
         })
     }
