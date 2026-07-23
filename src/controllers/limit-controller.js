@@ -1,6 +1,10 @@
-import rateLimiterService from "../services/rateLimiter-service.js";
 
+import responseBuilder from "../utils/response-builder.js";
 class LimitController {
+
+    constructor(service) {
+        this.service = service;
+    }
 
     health(req, res) {
         return res.json({
@@ -8,45 +12,76 @@ class LimitController {
         });
     }
 
-    async consume(req, res) {
-        const key = req.ip.replace("::ffff:", "");
+    getAll(req, res) {
+        return res.json(this.service.getAll());
+    }
 
-        const result = await rateLimiterService.consume(key);
+    getBucketByKey(req, res) {
 
-        if (!result.allowed) {
-            return res.status(429).json({
-                message: "Muitas requisições. Tente novamente mais tarde.",
-                retryAfter: result.retryAfter
-            });
-        }
+        const { id } = req.params;
 
-        return res.json({
-            message: "Requisição permitida",
-            tokens: result.tokens
+        const bucket = this.service.getBucketByKey(id);
+
+        return responseBuilder.found(res, {
+            bucket
         });
     }
 
-    async getBucket(req, res) {
-        const key = req.ip.replace("::ffff:", "");
+    resetBucket(req, res) {
 
-        const bucket = await rateLimiterService.getBucket(key);
+        const { id } = req.params;
 
-        return res.json(bucket);
+        const bucket = this.service.resetBucket(id);
+
+        return responseBuilder.found(res, {
+            bucket
+        });
+
     }
 
-    async reset(req, res) {
-        const key = req.ip.replace("::ffff:", "");
+    consume(req, res) {
 
-        const result = await rateLimiterService.reset(key);
+        const key = this.getClientKey(req);
 
-        return res.json(result);
+        const result = this.service.consume(key);
+
+        return responseBuilder.consumeSuccess(
+            res,
+            {
+                message: "Request allowed",
+                tokens: result.tokens
+            }
+        );
     }
 
-    async resetAll(req, res) {
-        const result = await rateLimiterService.resetAll();
+    deleteAllBuckets(req, res) {
 
-        return res.json(result);
+        this.service.deleteAll();
+
+        return responseBuilder.deleted(
+            res,
+            "All buckets were deleted successfully"
+        );
+
     }
+
+    deleteBucketById(req, res) {
+
+        const { id } = req.params;
+
+        this.service.deleteBucketByKey(id);
+
+        return responseBuilder.deleted(
+            res,
+            `Bucket ${id} deleted successfully`
+        );
+
+    }
+
+    getClientKey(req) {
+        return req.ip.replace("::ffff:", "");
+    }
+
 }
 
-export default new LimitController();
+export default LimitController;
