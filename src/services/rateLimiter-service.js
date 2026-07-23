@@ -1,14 +1,12 @@
-import TokenBucketAlgorithm from "../algorithms/token-bucket-algorithm.js";
-import memoryStore from "../storage/memory-store.js";
 import BucketNotFoundException from "../exceptions/bucket-not-found-exception.js";
 import RateLimitExceededException from "../exceptions/rate-limit-exceeded-exception.js";
 import StorageIsEmptyException from "../exceptions/storage-is-empty-exception.js";
 
 class RateLimiterService {
 
-    constructor(){
+    constructor(algorithm){
 
-        this.algorithm = new TokenBucketAlgorithm(memoryStore);
+        this.algorithm = algorithm;
 
     }
 
@@ -57,16 +55,9 @@ class RateLimiterService {
     }
     
     deleteAll() {
-        const bucket = this.algorithm.deleteAll();
-
-        if(bucket.isEmpty === true){
-            throw new StorageIsEmptyException();
-        }
-
-        return bucket;
-    
+        return this.algorithm.deleteAll();    
     }
 
 }
 
-export default new RateLimiterService();
+export default RateLimiterService;

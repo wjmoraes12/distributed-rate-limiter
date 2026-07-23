@@ -60,4 +60,4 @@ class MemoryStore {
         }
     }
 }
-export default new MemoryStore();
+export default MemoryStore;

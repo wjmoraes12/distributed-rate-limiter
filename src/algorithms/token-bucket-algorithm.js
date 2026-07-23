@@ -1,4 +1,5 @@
 import Algorithm from "./algorithm.js";
+import Bucket from "../entities/Bucket.js";
 
 class TokenBucketAlgorithm extends Algorithm {
 
@@ -17,16 +18,21 @@ class TokenBucketAlgorithm extends Algorithm {
 
         const bucket = this.getOrCreateBucket(key, now);
 
-        const { timePassed } = this.refillBucket(bucket, now);
+        const timePassed = bucket.refill(
+            this.capacity,
+            this.refillAmount,
+            this.refillTimeMs,
+            now
+        );
 
-        if (!this.canConsume(bucket)) {
+        if (!bucket.canConsume()) {
             this.saveBucket(key, bucket);
-            return this.buildDeniedResponse(bucket, timePassed);
+            return bucket.retryAfter(this.refillTimeMs, timePassed)        
         }
 
-        this.consumeToken(bucket);
+        bucket.consume();
 
-        this.saveBucket(key, bucket);
+        this.saveBucket(key,bucket);
 
         return this.buildAllowedResponse(bucket);
     }
@@ -40,14 +46,19 @@ class TokenBucketAlgorithm extends Algorithm {
     }
 
     resetBucket(key){
-        const now = Date.now()
+        const now = Date.now();
 
-        const data = {
-            tokens: this.capacity,
-            updatedAt: now
-        };
+        const bucket = this.store.get(key);
 
-        return this.store.updatedBucket(key, data);
+        if (!bucket) {
+            return null;
+        }
+
+        bucket.reset(this.capacity, now);
+
+        this.saveBucket(key, bucket);
+
+        return bucket;
     }
 
     deleteAll(){
@@ -61,42 +72,11 @@ class TokenBucketAlgorithm extends Algorithm {
     //Métodos Auxiliares
     getOrCreateBucket(key, now) {
         const bucket = this.store.get(key);
-
         if (bucket) {
             return bucket;
         }
 
-        return {
-            tokens: this.capacity,
-            updatedAt: now
-        };
-    }
-
-    refillBucket(bucket, now) {
-        const timePassed = now - bucket.updatedAt;
-
-        const tokensToAdd = Math.floor(timePassed / this.refillTimeMs) * this.refillAmount;
-
-        if (tokensToAdd > 0) {
-            bucket.tokens = Math.min(
-                this.capacity,
-                bucket.tokens + tokensToAdd
-            );
-
-            bucket.updatedAt = now;
-        }
-
-        return {
-            timePassed
-        };
-    }
-
-    canConsume(bucket) {
-        return bucket.tokens > 0;
-    }
-
-    consumeToken(bucket) {
-        bucket.tokens--;
+        return Bucket.create(this.capacity, now);
     }
 
     saveBucket(key, bucket) {
@@ -107,17 +87,6 @@ class TokenBucketAlgorithm extends Algorithm {
         return {
             allowed: true,
             tokens: bucket.tokens,
-            retryAfter: 0
-        };
-    }
-
-    buildDeniedResponse(bucket, timePassed) {
-        const retryAfter = this.refillTimeMs - (timePassed % this.refillTimeMs);
-
-        return {
-            allowed: false,
-            tokens: bucket.tokens,
-            retryAfter: Math.ceil(retryAfter / 1000)
         };
     }
 }
