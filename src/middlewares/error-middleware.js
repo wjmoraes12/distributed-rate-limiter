@@ -1,23 +1,41 @@
-import responseBuilder from "../utils/response-builder.js";
 import BucketNotFoundException from "../exceptions/bucket-not-found-exception.js";
 import RateLimitExceededException from "../exceptions/rate-limit-exceeded-exception.js";
 import StorageIsEmptyException from "../exceptions/storage-is-empty-exception.js";
 
-export default function errorMiddleware(error, req, res, next) {
+import responseBuilder from "../utils/response-builder.js";
 
-    if (error instanceof BucketNotFoundException) {
-        return responseBuilder.notFound(res);
-    }
+export default function createErrorMiddleware(logger) {
 
-    if (error instanceof RateLimitExceededException) {
-        return responseBuilder.tooManyRequests(res, {
-            retryAfter: error.retryAfter
+    return function errorMiddleware(error, req, res, next) {
+
+        logger.error(error.message, {
+
+            exception: error.constructor.name,
+
+            method: req.method,
+
+            path: req.originalUrl,
+
+            stack: error.stack
+
         });
-    }
 
-    if (error instanceof StorageIsEmptyException) {
-        return responseBuilder.messageEmptyStorage(res);
-    }
-    console.log(error)
-    return responseBuilder.messageInternalError(res);
+        if (error instanceof BucketNotFoundException) {
+            return responseBuilder.notFound(res);
+        }
+
+        if (error instanceof RateLimitExceededException) {
+            return responseBuilder.tooManyRequests(res, {
+                retryAfter: error.retryAfter
+            });
+        }
+
+        if (error instanceof StorageIsEmptyException) {
+            return responseBuilder.messageIsNotDeleted(res);
+        }
+
+        return responseBuilder.messageInternalError(res);
+
+    };
+
 }
