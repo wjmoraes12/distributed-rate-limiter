@@ -6,7 +6,7 @@ class Bucket {
             throw new Error("Invalid Tokens")
         }
 
-        if(!updatedAt){
+        if (typeof updatedAt !== "number") {
             throw new Error("Invalid timestamp");
         }
 
