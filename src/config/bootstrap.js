@@ -7,6 +7,7 @@ import Logger from "../logger/logger.js";
 import createLoggerMiddleware from "../middlewares/logger-middleware.js";
 import createErrorMiddleware from "../middlewares/error-middleware.js";
 import MemoryBucketRepository from "../repositories/memory-bucket-repository.js";
+import SystemClock from "../clock/system-clock.js";
 
 const logger = new Logger();
 const loggerMiddleware = createLoggerMiddleware(logger);
@@ -15,8 +16,9 @@ const errorMiddleware = createErrorMiddleware(logger);
 const store = new MemoryStore();
 
 const bucketRepository = new MemoryBucketRepository(store)
+const clock = new SystemClock()
 
-const algorithm = new TokenBucketAlgorithm(bucketRepository,rateLimiterConfig);
+const algorithm = new TokenBucketAlgorithm(clock, bucketRepository,rateLimiterConfig);
 
 const service = new RateLimiterService(algorithm);
 

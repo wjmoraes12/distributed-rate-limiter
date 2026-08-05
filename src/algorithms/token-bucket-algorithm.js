@@ -3,18 +3,18 @@ import Bucket from "../entities/Bucket.js"
 
 class TokenBucketAlgorithm extends Algorithm {
 
-    constructor(bucketRepository, options = {}) {
+    constructor(clock, bucketRepository, options = {}) {
         super();
 
         this.bucketRepository = bucketRepository;
-
+        this.clock =  clock
         this.capacity = options.capacity;
         this.refillAmount = options.refillAmount;
         this.refillTimeMs = options.refillTimeMs;
     }
 
     consume(key) {
-        const now = Date.now();
+        const now = this.clock.now();
 
         const bucket = this.getOrCreateBucket(key, now);
 
@@ -59,7 +59,7 @@ class TokenBucketAlgorithm extends Algorithm {
 
         bucket.reset(
             this.capacity,
-            Date.now()
+            this.clock.now
         );
 
         this.saveBucket(key, bucket);
