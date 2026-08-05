@@ -1,20 +1,20 @@
-import Algorithm from "./algorithm.js";
-import Bucket from "../entities/Bucket.js";
+import Algorithm from "../interfaces/RateLimiterAlgoritm.js";
+import Bucket from "../entities/Bucket.js"
 
 class TokenBucketAlgorithm extends Algorithm {
 
-    constructor(store, options = {}) {
+    constructor(clock, bucketRepository, options = {}) {
         super();
 
-        this.store = store;
-
-        this.capacity = options.capacity ?? 5;
-        this.refillAmount = options.refillAmount ?? 1;
-        this.refillTimeMs = options.refillTimeMs ?? 100000;
+        this.bucketRepository = bucketRepository;
+        this.clock =  clock
+        this.capacity = options.capacity;
+        this.refillAmount = options.refillAmount;
+        this.refillTimeMs = options.refillTimeMs;
     }
 
     consume(key) {
-        const now = Date.now();
+        const now = this.clock.now();
 
         const bucket = this.getOrCreateBucket(key, now);
 
@@ -27,67 +27,89 @@ class TokenBucketAlgorithm extends Algorithm {
 
         if (!bucket.canConsume()) {
             this.saveBucket(key, bucket);
-            return bucket.retryAfter(this.refillTimeMs, timePassed)        
+
+            return bucket.retryAfter(
+                this.refillTimeMs,
+                timePassed
+            );
         }
 
         bucket.consume();
 
-        this.saveBucket(key,bucket);
+        this.saveBucket(key, bucket);
 
         return this.buildAllowedResponse(bucket);
     }
 
     getAll() {
-        return this.store.getAll();
+        return this.bucketRepository.findAll();
     }
 
-    getBucketByKey(key){
-        return this.store.get(key);
+    getBucketByKey(key) {
+        return this.bucketRepository.findByKey(key);
     }
 
-    resetBucket(key){
-        const now = Date.now();
+    resetBucket(key) {
 
-        const bucket = this.store.get(key);
+        const bucket = this.loadBucket(key);
 
         if (!bucket) {
             return null;
         }
 
-        bucket.reset(this.capacity, now);
+        bucket.reset(
+            this.capacity,
+            this.clock.now
+        );
 
         this.saveBucket(key, bucket);
 
         return bucket;
     }
 
-    deleteAll(){
-        return this.store.deleteAll()
+    deleteBucketByKey(key) {
+        return this.bucketRepository.remove(key);
     }
 
-    deleteBucketByKey(key){
-        return this.store.delete(key)
+    deleteAll() {
+        return this.bucketRepository.removeAll();
     }
 
-    //Métodos Auxiliares
+    
+    // Métodos Auxiliares
     getOrCreateBucket(key, now) {
-        const bucket = this.store.get(key);
+
+        const bucket = this.loadBucket(key);
+
         if (bucket) {
             return bucket;
         }
 
-        return Bucket.create(this.capacity, now);
+        return Bucket.create(
+            this.capacity,
+            now
+        );
+    }
+
+    loadBucket(key) {
+        return this.bucketRepository.findByKey(key);
     }
 
     saveBucket(key, bucket) {
-        this.store.set(key, bucket);
+        return this.bucketRepository.save(
+            key,
+            bucket
+        );
     }
 
     buildAllowedResponse(bucket) {
         return {
             allowed: true,
             tokens: bucket.tokens,
+            retryAfter: 0
         };
     }
+
 }
+
 export default TokenBucketAlgorithm;

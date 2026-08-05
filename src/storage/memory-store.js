@@ -1,5 +1,8 @@
-class MemoryStore {
+import Storage from "../interfaces/Storage.js";
+
+class MemoryStore extends Storage{
     constructor() {
+        super();
         this.store = new Map();
     }
 
@@ -19,10 +22,6 @@ class MemoryStore {
         return value;
     }
 
-    has(key) {
-        return this.store.has(key);
-    }
-
     delete(key) {
         const deleted = this.store.delete(key);
 
@@ -32,7 +31,7 @@ class MemoryStore {
         }
     }
 
-    updatedBucket(key, data) {
+    updateBucket(key, data) {
 
         const bucket = this.store.get(key);
         if (!bucket) {
