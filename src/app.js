@@ -1,14 +1,6 @@
 import express from "express";
-
 import limitRoutes from "./routes/limit-routes.js";
-
-import {
-
-    loggerMiddleware,
-
-    errorMiddleware
-
-} from "./config/bootstrap.js";
+import { loggerMiddleware, errorMiddleware } from "./config/bootstrap.js";
 
 const app = express();
 

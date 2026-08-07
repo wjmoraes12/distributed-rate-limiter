@@ -1,19 +1,23 @@
 import Algorithm from "../interfaces/RateLimiterAlgoritm.js";
-import Bucket from "../entities/Bucket.js"
+import Bucket from "../entities/Bucket.js";
 
 class TokenBucketAlgorithm extends Algorithm {
 
     constructor(clock, bucketRepository, options = {}) {
         super();
 
+        this.clock = clock;
         this.bucketRepository = bucketRepository;
-        this.clock =  clock
+
         this.capacity = options.capacity;
         this.refillAmount = options.refillAmount;
         this.refillTimeMs = options.refillTimeMs;
     }
 
     consume(key) {
+
+        this.validateKey(key);
+
         const now = this.clock.now();
 
         const bucket = this.getOrCreateBucket(key, now);
@@ -26,6 +30,7 @@ class TokenBucketAlgorithm extends Algorithm {
         );
 
         if (!bucket.canConsume()) {
+
             this.saveBucket(key, bucket);
 
             return bucket.retryAfter(
@@ -46,11 +51,15 @@ class TokenBucketAlgorithm extends Algorithm {
     }
 
     getBucketByKey(key) {
-        return this.bucketRepository.findByKey(key);
+
+        this.validateKey(key);
+
+        return this.loadBucket(key);
     }
 
     resetBucket(key) {
-
+        
+        this.validateKey(key);
         const bucket = this.loadBucket(key);
 
         if (!bucket) {
@@ -59,7 +68,7 @@ class TokenBucketAlgorithm extends Algorithm {
 
         bucket.reset(
             this.capacity,
-            this.clock.now
+            this.clock.now()
         );
 
         this.saveBucket(key, bucket);
@@ -68,6 +77,9 @@ class TokenBucketAlgorithm extends Algorithm {
     }
 
     deleteBucketByKey(key) {
+
+        this.validateKey(key);
+
         return this.bucketRepository.remove(key);
     }
 
@@ -75,8 +87,7 @@ class TokenBucketAlgorithm extends Algorithm {
         return this.bucketRepository.removeAll();
     }
 
-    
-    // Métodos Auxiliares
+    // Helpers
     getOrCreateBucket(key, now) {
 
         const bucket = this.loadBucket(key);
@@ -96,7 +107,7 @@ class TokenBucketAlgorithm extends Algorithm {
     }
 
     saveBucket(key, bucket) {
-        return this.bucketRepository.save(
+        this.bucketRepository.save(
             key,
             bucket
         );
@@ -108,6 +119,16 @@ class TokenBucketAlgorithm extends Algorithm {
             tokens: bucket.tokens,
             retryAfter: 0
         };
+    }
+
+    validateKey(key) {
+        if (typeof key !== "string") {
+            throw new Error("Invalid key");
+        }
+
+        if (key.trim() === "") {
+            throw new Error("Invalid key");
+        }
     }
 
 }
