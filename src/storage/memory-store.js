@@ -33,19 +33,6 @@ class MemoryStore extends Storage{
 
     updateBucket(key, data) {
 
-        const bucket = this.store.get(key);
-        if (!bucket) {
-            return null;
-        }
-    
-        const updatedBucket = {
-            ...bucket,
-            ...data
-        };
-    
-        this.store.set(key, updatedBucket);
-    
-        return updatedBucket;
     }
 
     deleteAll() {

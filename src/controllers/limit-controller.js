@@ -79,7 +79,13 @@ class LimitController {
     }
 
     getClientKey(req) {
+
+        if (process.env.NODE_ENV === "test") {
+            return req.body.key ?? req.ip.replace("::ffff:", "");
+        }
+    
         return req.ip.replace("::ffff:", "");
+    
     }
 
 }
