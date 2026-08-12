@@ -1,4 +1,4 @@
-import BucketRepository from "./bucket-repository.js";
+import BucketRepository from "../interfaces/BucketRepository.js";
 
 class MemoryBucketRepository extends BucketRepository {
 
