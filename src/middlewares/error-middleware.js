@@ -1,6 +1,7 @@
 import BucketNotFoundException from "../exceptions/bucket-not-found-exception.js";
 import RateLimitExceededException from "../exceptions/rate-limit-exceeded-exception.js";
 import StorageIsEmptyException from "../exceptions/storage-is-empty-exception.js";
+import InvalidKeyRequest from "../exceptions/invalid-key-request.js";
 
 import responseBuilder from "../utils/response-builder.js";
 
@@ -32,6 +33,14 @@ export default function createErrorMiddleware(logger) {
 
         if (error instanceof StorageIsEmptyException) {
             return responseBuilder.messageIsNotDeleted(res);
+        }
+
+        if (error instanceof InvalidKeyRequest) {
+            return responseBuilder.invalidKeyRequest(res);
+        }
+
+        if (error instanceof SyntaxError) {
+            return responseBuilder.syntaxError(res);
         }
 
         return responseBuilder.messageInternalError(res);

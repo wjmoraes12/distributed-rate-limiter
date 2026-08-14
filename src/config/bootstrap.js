@@ -8,10 +8,13 @@ import createLoggerMiddleware from "../middlewares/logger-middleware.js";
 import createErrorMiddleware from "../middlewares/error-middleware.js";
 import MemoryBucketRepository from "../repositories/memory-bucket-repository.js";
 import SystemClock from "../clock/system-clock.js";
+import validateCheckRequest from "../middlewares/validate-check-request.js";
+
 
 const logger = new Logger();
 const loggerMiddleware = createLoggerMiddleware(logger);
 const errorMiddleware = createErrorMiddleware(logger);
+const validateCheckRequestMiddleware = validateCheckRequest(logger);
 
 const store = new MemoryStore();
 
@@ -27,5 +30,6 @@ const controller = new LimitController(service);
 export {
     controller,
     loggerMiddleware,
-    errorMiddleware
+    errorMiddleware,
+    validateCheckRequestMiddleware
 };

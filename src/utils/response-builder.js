@@ -48,5 +48,19 @@ class ResponseBuilder{
         });
     }
 
+    invalidKeyRequest(res, options = {}){
+        return res.status(400).json({
+            message: "Invalid key.",
+            status: false
+        });
+    }
+
+    syntaxError(res, options = {}){
+        return res.status(400).json({
+            message: "Syntax Error.",
+            status: false
+        });
+    }
+
 }
 export default new ResponseBuilder();
