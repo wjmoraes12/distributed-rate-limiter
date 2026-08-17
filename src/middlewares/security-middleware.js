@@ -1,4 +1,4 @@
-import InvalidKeyRequest from "../exceptions/invalid-key-request.js";
+import SecurityProblemException from "../exceptions/security-problem-exception.js";
 
 const securityMiddleware = (detector, logger) => {
 
@@ -16,9 +16,9 @@ const securityMiddleware = (detector, logger) => {
             return next();
         }
 
-        logger.warn("Invalid key received");
+        logger.warn("Security problem was found");
 
-        return next(new InvalidKeyRequest());
+        return next(new SecurityProblemException());
     };
 };
 
