@@ -7,7 +7,6 @@ class RateLimiter {
 
     consume(key){
         return this.algorithm.consume(key);
-
     }
 
 }

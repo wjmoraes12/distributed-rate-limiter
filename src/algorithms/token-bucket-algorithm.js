@@ -14,13 +14,12 @@ class TokenBucketAlgorithm extends Algorithm {
         this.refillTimeMs = options.refillTimeMs;
     }
 
-    consume(key) {
-
+    async consume(key) {
         this.validateKey(key);
 
         const now = this.clock.now();
 
-        const bucket = this.getOrCreateBucket(key, now);
+        const bucket = await this.getOrCreateBucket(key, now);
 
         const timePassed = bucket.refill(
             this.capacity,
@@ -30,10 +29,9 @@ class TokenBucketAlgorithm extends Algorithm {
         );
 
         if (!bucket.canConsume()) {
+            await this.saveBucket(key, bucket);
 
-            this.saveBucket(key, bucket);
-
-            return bucket.retryAfter(
+            return  bucket.retryAfter(
                 this.refillTimeMs,
                 timePassed
             );
@@ -41,26 +39,25 @@ class TokenBucketAlgorithm extends Algorithm {
 
         bucket.consume();
 
-        this.saveBucket(key, bucket);
+        await this.saveBucket(key, bucket);
 
         return this.buildAllowedResponse(bucket);
     }
 
-    getAll() {
-        return this.bucketRepository.findAll();
+    async getAll() {
+        return await this.bucketRepository.findAll();
     }
 
-    getBucketByKey(key) {
-
+    async getBucketByKey(key) {
         this.validateKey(key);
 
-        return this.loadBucket(key);
+        return await this.loadBucket(key);
     }
 
-    resetBucket(key) {
-        
+    async resetBucket(key) {
         this.validateKey(key);
-        const bucket = this.loadBucket(key);
+
+        const bucket = await this.loadBucket(key);
 
         if (!bucket) {
             return null;
@@ -71,26 +68,29 @@ class TokenBucketAlgorithm extends Algorithm {
             this.clock.now()
         );
 
-        this.saveBucket(key, bucket);
+        await this.saveBucket(key, bucket);
 
         return bucket;
     }
 
-    deleteBucketByKey(key) {
-
+    async deleteBucketByKey(key) {
         this.validateKey(key);
 
-        return this.bucketRepository.remove(key);
+        const bucket = await this.loadBucket(key);
+
+        if (!bucket) {
+            return false;
+        }
+
+        return await this.bucketRepository.remove(key);
     }
 
-    deleteAll() {
-        return this.bucketRepository.removeAll();
+    async deleteAll() {
+        return await this.bucketRepository.removeAll();
     }
 
-    // Helpers
-    getOrCreateBucket(key, now) {
-
-        const bucket = this.loadBucket(key);
+    async getOrCreateBucket(key, now) {
+        const bucket = await this.loadBucket(key);
 
         if (bucket) {
             return bucket;
@@ -102,12 +102,12 @@ class TokenBucketAlgorithm extends Algorithm {
         );
     }
 
-    loadBucket(key) {
-        return this.bucketRepository.findByKey(key);
+    async loadBucket(key) {
+        return await this.bucketRepository.findByKey(key);
     }
 
-    saveBucket(key, bucket) {
-        this.bucketRepository.save(
+    async saveBucket(key, bucket) {
+        await this.bucketRepository.save(
             key,
             bucket
         );
@@ -130,7 +130,6 @@ class TokenBucketAlgorithm extends Algorithm {
             throw new Error("Invalid key");
         }
     }
-
 }
 
 export default TokenBucketAlgorithm;

@@ -2,7 +2,6 @@ import request from "supertest";
 import app from "../../src/app.js";
 
 export default async function consumeTimesEndPoint(key, times) {
-
     let response;
 
     for (let i = 0; i < times; i++) {
@@ -12,5 +11,4 @@ export default async function consumeTimesEndPoint(key, times) {
     }
 
     return response;
-
 }

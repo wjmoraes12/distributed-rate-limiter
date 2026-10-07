@@ -7,7 +7,7 @@ export function createBucketByKey(key, storage) {
 }
 
 export function consumingBucket(bucket, key, storage) {
-    const newBucket = bucket.consume();
-    storage.updateBucket(key, newBucket);
-    return newBucket;
+    bucket.consume();
+    storage.set(key, bucket);
+    return bucket;
 }

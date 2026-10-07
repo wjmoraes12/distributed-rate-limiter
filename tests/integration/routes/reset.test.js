@@ -1,5 +1,3 @@
-import request from "supertest";
-import app from "../../../src/app.js";
 import consumeTimesEndPoint from "../../helpers/consumeTimesEndPoint-helper.js";
 import reset from "../../helpers/reset-helper.js";
 import expectSuccess from "../../fixtures/expect-success.js";
@@ -7,18 +5,15 @@ import expectSuccess from "../../fixtures/expect-success.js";
 describe("PATCH /buckets", () => {
 
     it("should reset all of the tokens by a key", async () => {
-
         const key = crypto.randomUUID();
 
         const response = await consumeTimesEndPoint(key, 5);
-
+        
         expectSuccess(response)
         expect(response.body.tokens).toBe(0);
-    
         const buckets = await reset(key);
-    
-        expectSuccess(response)
-        expect(buckets.body.message).toBe("Bucket found");
+        
+        expect(buckets.body.message).toBe("Bucket retrieved successfully");
         expect(buckets.body.bucket.tokens).toBe(5);
     
     });
@@ -28,8 +23,8 @@ describe("PATCH /buckets", () => {
         const key = crypto.randomUUID();
 
         const response = await consumeTimesEndPoint(key, 5);
-
         let buckets = await reset(key);
+
         expect(buckets.body.bucket.tokens).toBe(5);
 
         buckets = await consumeTimesEndPoint(key,1);

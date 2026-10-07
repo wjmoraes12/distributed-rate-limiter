@@ -1,5 +1,3 @@
-import request from "supertest";
-import app from "../../../src/app.js";
 import consumeTimesEndPoint from "../../helpers/consumeTimesEndPoint-helper.js";
 import { deleteAll, deleteByKey } from "../../helpers/delete-helper.js";
 import expectSuccess from "../../fixtures/expect-success.js";

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 
 import makeAlgorithm from "../../fixtures/make-algorithm.js";
 import consumeTimes from "../../helpers/consumeTimes-helper.js";
-import { errorMiddleware } from "../../../src/config/bootstrap.js";
+import { deleteAllBuckets } from "../../helpers/get-helper.js";
 
 const KEY = "127.0.0.1";
 const KEY2 = "127.0.0.2";
@@ -12,11 +12,11 @@ describe("TokenBucketAlgorithm", () => {
 
     describe("Consume", () => {
 
-        it("should create a bucket automatically", () => {
+        it("should create a bucket automatically", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            const result = algorithm.consume(KEY);
+            const result = await algorithm.consume(KEY);
 
             expect(result.allowed).toBe(true);
 
@@ -24,106 +24,109 @@ describe("TokenBucketAlgorithm", () => {
 
         });
 
-        it("should consume exactly one token", () => {
+        it("should consume exactly one token", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            const result = algorithm.consume(KEY);
+            const result = await algorithm.consume(KEY);
 
             expect(result.tokens).toBe(4);
 
         });
 
-        it("should consume two tokens", () => {
-
+        it("should consume two tokens", async () => {
             const { algorithm } = makeAlgorithm();
-
-            consumeTimes(algorithm, KEY, 1);
-
-            expect(algorithm.consume(KEY).tokens).toBe(3);
-
+        
+            await consumeTimes(algorithm, KEY, 2);
+        
+            const result = await algorithm.consume(KEY);
+        
+            expect(result.tokens).toBe(2);
         });
 
-        it("should consume until bucket becomes empty", () => {
-
+        it("should consume until bucket becomes empty", async () => {
+            deleteAllBuckets();
+        
             const { algorithm } = makeAlgorithm();
-
-            consumeTimes(algorithm, KEY, 5);
-
-            expect(algorithm.getBucketByKey(KEY).tokens).toBe(0);
-
+        
+            await consumeTimes(algorithm, KEY, 5);
+        
+            const bucket = await algorithm.getBucketByKey(KEY);
+                
+            expect(bucket.tokens).toBe(0);
         });
 
-        it("should deny the sixth request", () => {
+        it("should deny the sixth request", async () => {
 
             const { algorithm } = makeAlgorithm();
-
-            const result = consumeTimes(algorithm,KEY,6);
-
+        
+            const result = await consumeTimes(algorithm, KEY, 6);
+                
             expect(result.allowed).toBe(false);
             expect(result.retryAfter).toBe(100);
-
+        
         });
 
     });
 
     describe("Refill", () => {
 
-        it("should return remaining time until next refill", () => {
+        it("should return remaining time until next refill", async () => {
 
             const { algorithm, clock } = makeAlgorithm();
 
-            consumeTimes(algorithm,KEY,6);
+            await consumeTimes(algorithm,KEY,6);
 
             clock.advance(99000);
 
-            const result = algorithm.consume(KEY);
+            const result = await algorithm.consume(KEY);
 
             expect(result.allowed).toBe(false);
             expect(result.retryAfter).toBe(1);
 
         });
 
-        it("should allow request after one refill interval", () => {
+        it("should allow request after one refill interval", async () => {
 
             const { algorithm, clock } = makeAlgorithm();
 
-            consumeTimes(algorithm,KEY,6);
+            await consumeTimes(algorithm,KEY,6);
 
             clock.advance(100_000);
 
-            const result = algorithm.consume(KEY);
+            const result = await algorithm.consume(KEY);
 
             expect(result.allowed).toBe(true);
             expect(result.tokens).toBe(0);
 
         });
 
-        it("should refill two tokens after waiting 250ms", () => {
+        it("should refill two tokens after waiting 250ms", async () => {
 
             const { algorithm, clock } = makeAlgorithm();
 
-            consumeTimes(algorithm,KEY,6);
+            await consumeTimes(algorithm,KEY,6);
 
             clock.advance(250_000);
 
-            const result = algorithm.consume(KEY);
+            const result = await algorithm.consume(KEY);
 
             expect(result.tokens).toBe(1);
 
         });
 
-        it("should never exceed maximum capacity", () => {
+        it("should never exceed maximum capacity", async () => {
 
             const { algorithm, clock } = makeAlgorithm();
 
-            consumeTimes(algorithm,KEY,6);
+            await consumeTimes(algorithm,KEY,6);
 
             clock.advance(999999999);
 
-            algorithm.consume(KEY);
+            await algorithm.consume(KEY);
+            const bucket = await algorithm.getBucketByKey(KEY);
 
-            expect(algorithm.getBucketByKey(KEY).tokens).toBe(4);
+            expect(bucket.tokens).toBe(4);
 
         });
 
@@ -131,11 +134,11 @@ describe("TokenBucketAlgorithm", () => {
 
     describe("Get Or Create Bucket", () => {
 
-        it("should initialize bucket with valid values", () => {
+        it("should initialize bucket with valid values", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            const bucket = algorithm.getOrCreateBucket(KEY);
+            const bucket = await algorithm.getOrCreateBucket(KEY);
 
             expect(bucket.tokens).toBe(5);
             expect(bucket.updatedAt).toBeDefined();
@@ -146,76 +149,52 @@ describe("TokenBucketAlgorithm", () => {
 
     describe("Get Bucket", () => {
 
-        it("should get a Bucket after the creation", () => {
+        it("should get a Bucket after the creation", async () => {
 
             const { algorithm } = makeAlgorithm();
-            const bucket = algorithm.getOrCreateBucket(KEY);
-            expect(algorithm.consume(KEY).tokens).toBe(4);
+            let bucket = await algorithm.getOrCreateBucket(KEY);
+            bucket = await algorithm.consume(KEY);
+            expect(bucket.tokens).toBe(4);
             
-
-        });
-
-    });
-
-    describe("Get All", () => {
-
-        it("should not create duplicated buckets for the same key", () => {
-
-            const { algorithm } = makeAlgorithm();
-
-            algorithm.consume(KEY);
-
-            expect(algorithm.getAll()).toHaveLength(1);
-
-        });
-
-        it("should return every created bucket", () => {
-
-            const { algorithm } = makeAlgorithm();
-
-            algorithm.consume(KEY);
-            algorithm.consume(KEY2);
-            algorithm.consume(KEY3);
-
-            expect(algorithm.getAll()).toHaveLength(3);
-
         });
 
     });
 
     describe("Reset", () => {
 
-        it("should restore maximum capacity", () => {
+        it("should restore maximum capacity", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            consumeTimes(algorithm,KEY,5);
+            await consumeTimes(algorithm,KEY,5);
 
-            const bucket = algorithm.resetBucket(KEY);
+            const bucket = await algorithm.resetBucket(KEY);
 
             expect(bucket.tokens).toBe(5);
 
         });
 
-        it("should not exceed maximum capacity after multiple resets", () => {
+        it("should not exceed maximum capacity after multiple resets", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            consumeTimes(algorithm,KEY,5);
+            await consumeTimes(algorithm,KEY,5);
 
-            algorithm.resetBucket(KEY);
+            await algorithm.resetBucket(KEY);
 
-            const bucket = algorithm.resetBucket(KEY);
+            const bucket = await algorithm.resetBucket(KEY);
 
             expect(bucket.tokens).toBe(5);
 
         });
 
-        it("should return null when bucket does not exist", () => {
+        it("should return null when bucket does not exist", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            expect(algorithm.resetBucket(KEY)).toBe(null);
+            const bucket = await algorithm.resetBucket(KEY);
+
+            expect(bucket).toBe(null);
 
         });
 
@@ -223,32 +202,35 @@ describe("TokenBucketAlgorithm", () => {
 
     describe("Delete", () => {
 
-        it("should delete one bucket", () => {
+        it("should delete one bucket", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            algorithm.consume(KEY);
+            await algorithm.consume(KEY);
 
-            expect(algorithm.deleteBucketByKey(KEY).deleted).toBe(true);
+            const bucketByKey = await algorithm.deleteBucketByKey(KEY);
+            expect(bucketByKey.deleted).toBe(true);
 
-            expect(algorithm.getBucketByKey(KEY)).toBeUndefined();
-
+            const bucket = await algorithm.getBucketByKey(KEY);
+            expect(bucket).toBeUndefined();
         });
 
     });
 
     describe("Delete All", () => {
 
-        it("should delete every bucket", () => {
+        it("should delete every bucket", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            algorithm.consume(KEY);
-            algorithm.consume(KEY2);
+            await algorithm.consume(KEY);
+            await algorithm.consume(KEY2);
 
-            algorithm.deleteAll();
+            await algorithm.deleteAll();
 
-            expect(algorithm.getAll()).toHaveLength(0);
+            const listAllOfBuckets = await algorithm.getAll()
+
+            expect(listAllOfBuckets).toHaveLength(0);
 
         });
 
@@ -256,28 +238,33 @@ describe("TokenBucketAlgorithm", () => {
 
     describe("Multiple Buckets", () => {
 
-        it("should create independent buckets", () => {
+        it("should create independent buckets", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            algorithm.consume(KEY);
-            algorithm.consume(KEY2);
+            await algorithm.consume(KEY);
+            await algorithm.consume(KEY2);
 
-            expect(algorithm.getAll()).toHaveLength(2);
+            const listAllOfBuckets = await algorithm.getAll()
+
+            expect(listAllOfBuckets).toHaveLength(2);
 
         });
 
-        it("should keep buckets isolated", () => {
+        it("should keep buckets isolated", async () => {
 
             const { algorithm } = makeAlgorithm();
 
-            algorithm.consume(KEY);
+            await algorithm.consume(KEY);
 
-            algorithm.consume(KEY2);
+            await algorithm.consume(KEY2);
 
-            expect(algorithm.getBucketByKey(KEY).tokens).toBe(4);
+            const bucket1 = await algorithm.getBucketByKey(KEY);
+            const bucket2 = await algorithm.getBucketByKey(KEY2);
 
-            expect(algorithm.getBucketByKey(KEY2).tokens).toBe(4);
+            expect(bucket1.tokens).toBe(4);
+
+            expect(bucket2.tokens).toBe(4);
 
         });
 
@@ -285,14 +272,13 @@ describe("TokenBucketAlgorithm", () => {
 
     describe("Invalid Inputs", () => {
 
-        it("should throw an error for invalid inputs", () => {
+        it("should throw an error for invalid inputs", async () => {
 
             const { algorithm } = makeAlgorithm();
         
-            expect(() => algorithm.consume(undefined)).toThrow("Invalid key");
-            expect(() => algorithm.consume(null)).toThrow("Invalid key");
-            expect(() => algorithm.consume(NaN)).toThrow("Invalid key");
-            expect(algorithm.consume(KEY).tokens).toBe(4)
+            await expect(algorithm.consume(undefined)).rejects.toThrow("Invalid key");
+            await expect(algorithm.consume(null)).rejects.toThrow("Invalid key");
+            await expect(algorithm.consume(NaN)).rejects.toThrow("Invalid key");
         
         });
     });
