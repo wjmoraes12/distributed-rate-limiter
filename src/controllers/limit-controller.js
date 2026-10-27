@@ -12,39 +12,37 @@ class LimitController {
         });
     }
 
-    getAll(req, res) {
-        return res.json(this.service.getAll());
+    async getAll(req, res) {
+        return await res.json(await this.service.getAll());
     }
 
-    getBucketByKey(req, res) {
+    async getBucketByKey(req, res) {
 
         const { id } = req.params;
 
-        const bucket = this.service.getBucketByKey(id);
+        const bucket = await this.service.getBucketByKey(id);
 
         return responseBuilder.found(res, {
             bucket
         });
     }
 
-    resetBucket(req, res) {
+    async resetBucket(req, res) {
 
         const { id } = req.params;
 
-        const bucket = this.service.resetBucket(id);
-
+        const bucket = await this.service.resetBucket(id);
         return responseBuilder.found(res, {
             bucket
         });
 
     }
 
-    consume(req, res) {
+    async consume(req, res) {
 
         const key = this.getClientKey(req);
 
-        const result = this.service.consume(key);
-
+        const result = await this.service.consume(key);
         return responseBuilder.consumeSuccess(
             res,
             {
@@ -54,9 +52,9 @@ class LimitController {
         );
     }
 
-    deleteAllBuckets(req, res) {
+    async deleteAllBuckets(req, res) {
 
-        this.service.deleteAll();
+        await this.service.deleteAll();
 
         return responseBuilder.deleted(
             res,
@@ -65,11 +63,11 @@ class LimitController {
 
     }
 
-    deleteBucketById(req, res) {
+    async deleteBucketById(req, res) {
 
         const { id } = req.params;
 
-        this.service.deleteBucketByKey(id);
+        await this.service.deleteBucketByKey(id);
 
         return responseBuilder.deleted(
             res,

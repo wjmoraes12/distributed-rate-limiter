@@ -1,8 +1,14 @@
-export default function consumeTimes(algorithm, key, times){
-    let result
-    for(let x = 0; x < times; x++){
-        result = algorithm.consume(key);
+export default async function consumeTimes(algorithm, key, times) {
+    if (!Number.isInteger(times) || times < 1) {
+        throw new Error("times deve ser um inteiro positivo.");
     }
 
-    return result
+    let result;
+
+    for (let x = 0; x < times; x++) {
+        result = await algorithm.consume(key);
+        
+    }
+
+    return result;
 }

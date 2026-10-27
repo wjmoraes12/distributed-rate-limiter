@@ -1,7 +1,4 @@
-import request from "supertest";
-import app from "../../../src/app.js";
 import consumeTimesEndPoint from "../../helpers/consumeTimesEndPoint-helper.js"
-import expectSuccess from "../../fixtures/expect-success.js";
 import tooManyRequests from "../../fixtures/tooManyRequests.js";
 
 describe("POST /check", () => {
@@ -9,7 +6,6 @@ describe("POST /check", () => {
     it("should deny the sixth request", async () => {
 
         const response = await consumeTimesEndPoint(crypto.randomUUID(),6);
-    
         tooManyRequests(response)
         expect(response.body.retryAfter).toBe(100);
     

@@ -1,17 +1,15 @@
 import BucketNotFoundException from "../exceptions/bucket-not-found-exception.js";
 import RateLimitExceededException from "../exceptions/rate-limit-exceeded-exception.js";
-import StorageIsEmptyException from "../exceptions/storage-is-empty-exception.js";
+
 
 class RateLimiterService {
 
     constructor(algorithm){
-
         this.algorithm = algorithm;
-
     }
 
-    consume(key) {
-        const result = this.algorithm.consume(key);
+    async consume(key) {
+        const result = await this.algorithm.consume(key);
     
         if (!result.allowed) {
             throw new RateLimitExceededException(result.retryAfter);
@@ -20,42 +18,41 @@ class RateLimiterService {
         return result;
     }
     
-    getAll() {
-        return this.algorithm.getAll();
+    async getAll() {
+        return await this.algorithm.getAll();
     }
     
-    getBucketByKey(key) {
-        const bucket = this.algorithm.getBucketByKey(key);
+    async getBucketByKey(key) {
+        const bucket = await this.algorithm.getBucketByKey(key);
     
-        if (!bucket) {
+        if (bucket === null) {
             throw new BucketNotFoundException(key);
         }
     
         return bucket;
     }
     
-    resetBucket(key) {
-        const bucket = this.algorithm.resetBucket(key);
-    
-        if (!bucket) {
-            throw new BucketNotFoundException(key);
-        }
-    
-        return bucket;
-    }
-    
-    deleteBucketByKey(key) {
-        const deleted = this.algorithm.deleteBucketByKey(key);
+    async resetBucket(key) {
+        const bucket = await this.algorithm.resetBucket(key);
 
-        if (deleted.deleted === false) {
+        if (bucket === null) {
+            throw new BucketNotFoundException(key);
+        }
+    
+        return bucket;
+    }
+    
+    async deleteBucketByKey(key) {
+        const deleted = await this.algorithm.deleteBucketByKey(key);
+        if (deleted === false) {
             throw new BucketNotFoundException(key);
         }
     
         return { deleted: true };
     }
     
-    deleteAll() {
-        return this.algorithm.deleteAll();    
+    async deleteAll() {
+        return await this.algorithm.deleteAll();    
     }
 
 }
