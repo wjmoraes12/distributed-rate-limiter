@@ -4,13 +4,6 @@ Projeto desenvolvido para estudar engenharia de software, sistemas distribuídos
 
 ## Objetivos
 
-- Fixed Window
-- Sliding Window
 - Token Bucket
-- Leaky Bucket
 - Redis
 - Lua Scripts
-- Docker
-- Kubernetes
-- Prometheus
-- Grafana# Rate-Limit
